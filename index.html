@@ -97,12 +97,67 @@
 
     <footer id="contact" class="footer">
       <div class="container">
-        <p><strong>九藤集团</strong> · 官网与工具站</p>
-        <p>商务合作：wjecen@gmail.com</p>
+        <h2>联系我们</h2>
+        <div class="contact-grid">
+          <div class="contact-info">
+            <p><strong>九藤集团</strong></p>
+            <p>商务合作：wjecen@gmail.com</p>
+            <p>我们将在 24 小时内回复您的咨询</p>
+          </div>
+          <form id="contactForm" class="contact-form">
+            <div class="form-row">
+              <input type="text" id="contactName" placeholder="您的姓名 *" required>
+              <input type="tel" id="contactPhone" placeholder="联系电话">
+            </div>
+            <div class="form-row">
+              <input type="email" id="contactEmail" placeholder="电子邮箱">
+              <input type="text" id="contactCompany" placeholder="公司名称">
+            </div>
+            <textarea id="contactMessage" placeholder="请描述您的需求 *" required></textarea>
+            <button type="submit" class="btn primary">提交咨询</button>
+          </form>
+        </div>
         <p class="muted">© <span id="year"></span> 九藤集团. All rights reserved.</p>
       </div>
     </footer>
 
-    <script src="./script.js"></script>
+    <script>
+      // 年份
+      document.getElementById('year').textContent = new Date().getFullYear();
+      
+      // 联系表单
+      document.getElementById('contactForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+        btn.textContent = '提交中...';
+        
+        try {
+          const res = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: document.getElementById('contactName').value,
+              email: document.getElementById('contactEmail').value,
+              phone: document.getElementById('contactPhone').value,
+              company: document.getElementById('contactCompany').value,
+              message: document.getElementById('contactMessage').value
+            })
+          });
+          
+          if (res.ok) {
+            alert('提交成功！我们将尽快与您联系。');
+            e.target.reset();
+          } else {
+            alert('提交失败，请稍后重试。');
+          }
+        } catch (err) {
+          alert('网络错误，请稍后重试。');
+        }
+        
+        btn.disabled = false;
+        btn.textContent = '提交咨询';
+      });
+    </script>
   </body>
 </html>
