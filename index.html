@@ -158,7 +158,7 @@
       // Supabase 初始化
       const SUPABASE_URL = 'https://hidmcbxqjoecvzlumxiy.supabase.co';
       const SUPABASE_ANON_KEY = 'sb_publishable_5eWYFHzeoI-sLDnNTCc80w_M8pbJ3h6';
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const supabase = (window.supabaseJs || window.supabase).createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       
       // 登录相关元素
       const loginBtn = document.getElementById('loginBtn');
