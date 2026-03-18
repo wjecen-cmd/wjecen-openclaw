@@ -6,6 +6,7 @@
     <title>九藤集团 | 链接文化价值，驱动商业增长</title>
     <meta name="description" content="九藤集团官方网站，涵盖九藤文化与九藤商服两大板块，提供品牌内容与商业增长解决方案。" />
     <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- 百度统计 -->
     <script>
     var _hmt = _hmt || [];
@@ -28,6 +29,13 @@
           <a href="#tools">工具站</a>
           <a href="#contact">联系</a>
         </nav>
+        <div class="auth-area">
+          <button id="loginBtn" class="btn-login">登录</button>
+          <div id="userArea" class="user-area" style="display:none;">
+            <span id="userPhone"></span>
+            <button id="logoutBtn" class="btn-logout">退出</button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -47,8 +55,8 @@
       <section id="about" class="section container">
         <h2>关于九藤集团</h2>
         <p>
-          九藤集团聚焦“文化表达 + 商业服务”双轮驱动，面向企业提供品牌内容策划、增长策略、数字化运营与项目落地支持，
-          帮助客户从“被看见”走向“可增长”。
+          九藤集团聚焦"文化表达 + 商业服务"双轮驱动，面向企业提供品牌内容策划、增长策略、数字化运营与项目落地支持，
+          帮助客户从"被看见"走向"可增长"。
         </p>
       </section>
 
@@ -121,9 +129,191 @@
       </div>
     </footer>
 
+    <!-- 登录弹窗 -->
+    <div id="loginModal" class="modal">
+      <div class="modal-content">
+        <span class="modal-close" id="closeModal">&times;</span>
+        <h3>登录九藤集团</h3>
+        <div id="step1" class="login-step">
+          <label for="phoneInput">手机号</label>
+          <input type="tel" id="phoneInput" placeholder="请输入手机号" maxlength="11">
+          <button id="sendCodeBtn" class="btn primary full-width">获取验证码</button>
+          <p class="hint">新用户将自动注册</p>
+        </div>
+        <div id="step2" class="login-step" style="display:none;">
+          <label for="codeInput">验证码</label>
+          <p class="phone-display">验证码已发送至 <span id="phoneDisplay"></span></p>
+          <input type="text" id="codeInput" placeholder="请输入验证码" maxlength="6">
+          <button id="verifyBtn" class="btn primary full-width">登录</button>
+          <button id="backBtn" class="btn ghost full-width">返回</button>
+        </div>
+        <p id="loginError" class="error-msg"></p>
+      </div>
+    </div>
+
     <script>
       // 年份
       document.getElementById('year').textContent = new Date().getFullYear();
+      
+      // Supabase 初始化
+      const SUPABASE_URL = 'https://hidmcbxqjoecvzlumxiy.supabase.co';
+      const SUPABASE_ANON_KEY = 'sb_publishable_5eWYFHzeoI-sLDnNTCc80w_M8pbJ3h6';
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      
+      // 登录相关元素
+      const loginBtn = document.getElementById('loginBtn');
+      const userArea = document.getElementById('userArea');
+      const userPhone = document.getElementById('userPhone');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const loginModal = document.getElementById('loginModal');
+      const closeModal = document.getElementById('closeModal');
+      const step1 = document.getElementById('step1');
+      const step2 = document.getElementById('step2');
+      const phoneInput = document.getElementById('phoneInput');
+      const codeInput = document.getElementById('codeInput');
+      const sendCodeBtn = document.getElementById('sendCodeBtn');
+      const verifyBtn = document.getElementById('verifyBtn');
+      const backBtn = document.getElementById('backBtn');
+      const phoneDisplay = document.getElementById('phoneDisplay');
+      const loginError = document.getElementById('loginError');
+      
+      let countdownTimer = null;
+      
+      // 检查登录状态
+      async function checkAuth() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.phone) {
+          showLoggedIn(user.phone);
+        }
+      }
+      
+      function showLoggedIn(phone) {
+        loginBtn.style.display = 'none';
+        userArea.style.display = 'flex';
+        userPhone.textContent = phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+      }
+      
+      function showLoggedOut() {
+        loginBtn.style.display = 'block';
+        userArea.style.display = 'none';
+        userPhone.textContent = '';
+      }
+      
+      // 打开登录弹窗
+      loginBtn.addEventListener('click', () => {
+        loginModal.style.display = 'flex';
+        step1.style.display = 'block';
+        step2.style.display = 'none';
+        loginError.textContent = '';
+        phoneInput.value = '';
+        codeInput.value = '';
+      });
+      
+      // 关闭弹窗
+      closeModal.addEventListener('click', () => {
+        loginModal.style.display = 'none';
+      });
+      
+      loginModal.addEventListener('click', (e) => {
+        if (e.target === loginModal) {
+          loginModal.style.display = 'none';
+        }
+      });
+      
+      // 发送验证码
+      sendCodeBtn.addEventListener('click', async () => {
+        const phone = phoneInput.value.trim();
+        if (!/^1\d{10}$/.test(phone)) {
+          loginError.textContent = '请输入正确的手机号';
+          return;
+        }
+        
+        sendCodeBtn.disabled = true;
+        sendCodeBtn.textContent = '发送中...';
+        loginError.textContent = '';
+        
+        try {
+          const { error } = await supabase.auth.signInWithOtp({
+            phone: '+86' + phone
+          });
+          
+          if (error) throw error;
+          
+          step1.style.display = 'none';
+          step2.style.display = 'block';
+          phoneDisplay.textContent = phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+          codeInput.focus();
+          
+          // 倒计时
+          let seconds = 60;
+          sendCodeBtn.textContent = seconds + 's';
+          countdownTimer = setInterval(() => {
+            seconds--;
+            if (seconds <= 0) {
+              clearInterval(countdownTimer);
+              sendCodeBtn.textContent = '重新获取';
+              sendCodeBtn.disabled = false;
+            } else {
+              sendCodeBtn.textContent = seconds + 's';
+            }
+          }, 1000);
+          
+        } catch (err) {
+          loginError.textContent = err.message || '发送失败，请稍后重试';
+          sendCodeBtn.disabled = false;
+          sendCodeBtn.textContent = '获取验证码';
+        }
+      });
+      
+      // 验证码登录
+      verifyBtn.addEventListener('click', async () => {
+        const phone = phoneInput.value.trim();
+        const code = codeInput.value.trim();
+        
+        if (!/^\d{6}$/.test(code)) {
+          loginError.textContent = '请输入6位验证码';
+          return;
+        }
+        
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = '登录中...';
+        loginError.textContent = '';
+        
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            phone: '+86' + phone,
+            token: code,
+            type: 'sms'
+          });
+          
+          if (error) throw error;
+          
+          loginModal.style.display = 'none';
+          showLoggedIn(phone);
+          
+        } catch (err) {
+          loginError.textContent = err.message || '验证码错误或已过期';
+          verifyBtn.disabled = false;
+          verifyBtn.textContent = '登录';
+        }
+      });
+      
+      // 返回
+      backBtn.addEventListener('click', () => {
+        step2.style.display = 'none';
+        step1.style.display = 'block';
+        codeInput.value = '';
+        loginError.textContent = '';
+      });
+      
+      // 退出登录
+      logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        showLoggedOut();
+      });
+      
+      // 页面加载时检查登录状态
+      checkAuth();
       
       // 联系表单
       document.getElementById('contactForm').addEventListener('submit', async (e) => {
