@@ -1,0 +1,9 @@
+{
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "regions": ["hkg1"],
+  "routes": [
+    { "src": "/admin/(.*)", "dest": "/admin/$1" }
+  ]
+}
